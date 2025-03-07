@@ -42,21 +42,44 @@ whatsapp.onMessage(async ({ messages }) => {
       text: response.message.content!,
     })
 
-    // Test interactive messages
-    whatsapp.messages.interactive({
+    // Test interactive list modal message
+    whatsapp.messages.modalChoices({
       from: '574709005728246',
       to: messages[0].from,
-      modalTitle: "Order",
-      modalDescription: "Order a new product now",
+      title: "Order",
+      description: "Order a new product now",
       buttonText: "Choose",
-      choices: [{
-        title: "Choices 1",
-        rows: [
-          { id: "choice1", title: "Choice 1", description: "This is the first choice" },
-          { id: "choice2", title: "Choice 2", description: "This is the second choice" },
-          { id: "choice3", title: "Choice 3", description: "This is the third choice" },
-        ]
-      }]
+      sections: [
+        {
+          title: "Section 1",
+          rows: [
+            { id: "choice1", title: "Choice 1", description: "This is the first choice" },
+            { id: "choice2", title: "Choice 2", description: "This is the second choice" },
+            { id: "choice3", title: "Choice 3", description: "This is the third choice" },
+          ]
+        },
+        {
+          title: "Section 2",
+          rows: [
+            { id: "choice1", title: "Choice 1", description: "This is the first choice" },
+            { id: "choice2", title: "Choice 2", description: "This is the second choice" },
+            { id: "choice3", title: "Choice 3", description: "This is the third choice" },
+          ]
+        },
+      ]
+    })
+
+    // Test interactive reply button message
+    whatsapp.messages.replyChoices({
+      from: "574709005728246",
+      to: messages[0].from,
+      header: {text: "Make your choice"},
+      text: "This is your chance to make your choice",
+      choices: [
+        {id: "c1", title: "First Choice"},
+        {id: "c2", title: "Second Choice"},
+        {id: "c3", title: "Third Choice"},
+      ]
     })
   }
 })

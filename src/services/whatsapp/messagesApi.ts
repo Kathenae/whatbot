@@ -9,11 +9,11 @@ export interface TextMessage extends BaseMessage {
     text: string,
 }
 
-export interface interactiveMessage extends BaseMessage {
-    modalTitle: string,
-    modalDescription: string,
+export interface ModalChoicesMessage extends BaseMessage {
+    title: string,
+    description: string,
     buttonText: string,
-    choices: {
+    sections: {
         title: string,
         rows: {
             id: string,
@@ -23,10 +23,28 @@ export interface interactiveMessage extends BaseMessage {
     }[]
 }
 
-interface MediaMessage extends BaseMessage {
+type Media = { id: string, link?: never } | { id?: never, link: string }
+
+export interface ReplyChoicesMessage extends BaseMessage {
+    
+    /**
+     * @property provide either the text, document, image or video
+     */
+    header: (
+        {document: Media, image?: never, text?: never, video?: never} |
+        {image: Media, document?: never, text?: never, video?: never} |
+        {text: string, document?: never, image?: never, video?: never} |
+        {video: Media, document?: never, image?: never, text?: never}
+    ),
+    text: string,
+    choices: {
+        id: string,
+        title: string,
+    }[]
+}
+
+type MediaMessage = BaseMessage & Media & {
     caption: string
-    mediaId?: string
-    mediaLink?: string
 }
 
 export default class MessagesAPI {
@@ -60,36 +78,62 @@ export default class MessagesAPI {
         return response;
     }
 
-    async interactive(message: interactiveMessage) {
+    async modalChoices(message: ModalChoicesMessage) {
         const response = await this.send(message.from, message.to, {
             type: "interactive",
             interactive: {
                 type: "list",
                 header: {
                     type: "text",
-                    text: message.modalTitle,
+                    text: message.title,
                 },
                 body: {
-                    text: message.modalDescription
+                    text: message.description
                 },
                 action: {
                     button: message.buttonText,
-                    sections: message.choices,
+                    sections: message.sections,
                 }
             }
         })
         return response;
     }
 
+    async replyChoices(message: ReplyChoicesMessage) {
+        await this.send(message.from, message.to, {
+            type: "interactive",
+            interactive: {
+                type: "button",
+                header: {
+                    ...message.header,
+                    type: message.header.text? "text" : message.header.document? "document" : message.header.image? "image" : "video"
+                },
+                body: {
+                    text: message.text
+                },
+                action: {
+                    buttons: message.choices.map((choice) => ({
+                        type: "reply",
+                        reply: {
+                            id: choice.id,
+                            title: choice.title
+                        }
+                    }))
+                }
+            }
+        })
+    }
+
+
     private async sendMediaMessage(type: string, message: MediaMessage) {
         let media: any = {
             caption: message.caption
         }
 
-        if (message.mediaId) {
-            media.id = message.mediaId
-        } else if (message.mediaLink) {
-            media.link = message.mediaLink
+        if (message.id) {
+            media.id = message.id
+        } else if (message.link) {
+            media.link = message.link
         }
 
         return await this.send(message.from, message.to, {
